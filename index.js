@@ -32572,7 +32572,6 @@ var sot23WithoutParsing = (parameters) => {
     });
     pads.push(rectpad(i + 1, x, y, Number.parseFloat(parameters.pl), Number.parseFloat(parameters.pw)));
   }
-  console.log("parameters.h", parameters.h);
   const silkscreenRefText = silkscreenRef(0, parseInt(parameters.h), 0.3);
   return [...pads, silkscreenRefText];
 };
