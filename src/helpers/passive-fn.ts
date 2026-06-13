@@ -279,6 +279,12 @@ export const passive = (params: PassiveDef): AnyCircuitElement[] => {
       ? sz?.nonpolarizedSilkscreen
       : undefined
 
+  // Pin convention: diode pin 2 is cathode/negative, so keep the silkscreen closed on the cathode side.
+  // That means the open segment is on the anode side (left pad).
+  const diodeCathodeSide: "left" | "right" = fn === "diode" ? "right" : "left"
+  const polarizedSilkscreenOpenSide: "left" | "right" =
+    diodeCathodeSide === "right" ? "left" : "right"
+
   if (nonpolarizedSilkscreen?.stroke_width_mm) {
     const {
       line_half_length_mm = 0,
@@ -311,16 +317,23 @@ export const passive = (params: PassiveDef): AnyCircuitElement[] => {
     ]
   } else {
     // Polarized-style 3-sided outline to indicate orientation/polarity.
+    const leftX = -p / 2
+    const rightX = p / 2 + pw / 2 + 0.2
+    const activeLeftX = polarizedSilkscreenOpenSide === "left" ? leftX : rightX
+    const activeRightX = polarizedSilkscreenOpenSide === "left" ? rightX : leftX
+    const topY = ph / 2 + 0.4
+    const bottomY = -ph / 2 - 0.4
+
     silkscreenLines = [
       {
         type: "pcb_silkscreen_path",
         layer: "top",
         pcb_component_id: "",
         route: [
-          { x: p / 2, y: ph / 2 + 0.4 },
-          { x: -p / 2 - pw / 2 - 0.2, y: ph / 2 + 0.4 },
-          { x: -p / 2 - pw / 2 - 0.2, y: -ph / 2 - 0.4 },
-          { x: p / 2, y: -ph / 2 - 0.4 },
+          { x: activeLeftX, y: topY },
+          { x: activeRightX, y: topY },
+          { x: activeRightX, y: bottomY },
+          { x: activeLeftX, y: bottomY },
         ],
         stroke_width: 0.1,
         pcb_silkscreen_path_id: "",
