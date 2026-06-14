@@ -15,14 +15,12 @@ test("getFootprintNamesByType groups footprint names by component type", () => {
 
   expect(passiveFootprintNames).toContain("res")
   expect(passiveFootprintNames).toContain("cap")
-  expect(passiveFootprintNames).toContain("diode")
-  expect(passiveFootprintNames).toContain("led")
 
   expect(normalFootprintNames).toContain("dip")
+  expect(normalFootprintNames).toContain("diode")
+  expect(normalFootprintNames).toContain("led")
   expect(normalFootprintNames).toContain("soic")
   expect(normalFootprintNames).toContain("qfp")
   expect(normalFootprintNames).not.toContain("res")
   expect(normalFootprintNames).not.toContain("cap")
-  expect(normalFootprintNames).not.toContain("diode")
-  expect(normalFootprintNames).not.toContain("led")
 })

@@ -14,6 +14,42 @@ test("led_rect", () => {
   const svgContent = convertCircuitJsonToPcbSvg(soup)
   expect(svgContent).toMatchSvgSnapshot(import.meta.path, "led_rect")
 })
+
+test("led pin 1 is on the closed silkscreen side", () => {
+  const soup = fp().led().imperial("0402").circuitJson()
+  type PcbRectPad = Extract<
+    (typeof soup)[number],
+    { type: "pcb_smtpad"; shape: "rect" }
+  >
+  const pads = soup.filter(
+    (element): element is PcbRectPad =>
+      element.type === "pcb_smtpad" && element.shape === "rect",
+  )
+  const pin1 = pads.find((pad) => pad.port_hints?.includes("1"))
+  const pin2 = pads.find((pad) => pad.port_hints?.includes("2"))
+  type PcbSilkscreenText = Extract<
+    (typeof soup)[number],
+    { type: "pcb_silkscreen_text" }
+  >
+  type PcbSilkscreenPath = Extract<
+    (typeof soup)[number],
+    { type: "pcb_silkscreen_path" }
+  >
+  const plusMarker = soup.find(
+    (element): element is PcbSilkscreenText =>
+      element.type === "pcb_silkscreen_text" && element.text === "+",
+  )
+  const outline = soup.find(
+    (element): element is PcbSilkscreenPath =>
+      element.type === "pcb_silkscreen_path",
+  )
+
+  expect(pin1?.x).toBeLessThan(0)
+  expect(pin2?.x).toBeGreaterThan(0)
+  expect(outline?.route[1]?.x).toBeLessThan(0)
+  expect(outline?.route[2]?.x).toBeLessThan(0)
+  expect(plusMarker?.anchor_position?.x).toBeGreaterThan(0)
+})
 test("led_hole", () => {
   const soup = led({
     tht: true,

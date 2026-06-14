@@ -196,7 +196,7 @@ const imperialMap = Object.fromEntries(
   footprintSizes.map((s) => [s.imperial, s]),
 )
 
-const createCourtyardRect = (
+export const createCourtyardRect = (
   width: number,
   height: number,
 ): PcbCourtyardRect => ({
@@ -226,21 +226,8 @@ export const passive_def = base_def.extend({
 
 export type PassiveDef = z.input<typeof passive_def>
 
-export const passive = (params: PassiveDef): AnyCircuitElement[] => {
-  let {
-    fn,
-    tht,
-    p,
-    pw,
-    ph,
-    metric,
-    imperial,
-    w,
-    h,
-    nonpolarized,
-    textbottom,
-    string: footprintString,
-  } = params
+export const resolvePassiveDimensions = (params: PassiveDef) => {
+  let { p, pw, ph, metric, imperial, w, h } = params
 
   if (typeof w === "string") w = mm(w)
   if (typeof h === "string") h = mm(h)
@@ -254,21 +241,28 @@ export const passive = (params: PassiveDef): AnyCircuitElement[] => {
     )
   }
 
-  let sz: StandardSize | undefined
-  if (metric) sz = metricMap[metric]
-  if (imperial) sz = imperialMap[imperial]
+  let standardSize: StandardSize | undefined
+  if (metric) standardSize = metricMap[metric]
+  if (imperial) standardSize = imperialMap[imperial]
 
-  if (sz) {
-    w = sz.w_mm_min
-    h = sz.h_mm_min
-    p = sz.p_mm_min
-    pw = sz.pw_mm_min
-    ph = sz.ph_mm_min
+  if (standardSize) {
+    w = standardSize.w_mm_min
+    h = standardSize.h_mm_min
+    p = standardSize.p_mm_min
+    pw = standardSize.pw_mm_min
+    ph = standardSize.ph_mm_min
   }
 
   if (p === undefined || pw === undefined || ph === undefined) {
     throw new Error("Could not determine required pad dimensions (p, pw, ph)")
   }
+
+  return { p, pw, ph, w, h, standardSize }
+}
+
+export const passive = (params: PassiveDef): AnyCircuitElement[] => {
+  const { fn, tht, nonpolarized, textbottom, string: footprintString } = params
+  const { p, pw, ph, standardSize: sz } = resolvePassiveDimensions(params)
 
   let silkscreenLines: PcbSilkscreenPath[] = []
   const nonpolarizedSilkscreen =
@@ -278,10 +272,6 @@ export const passive = (params: PassiveDef): AnyCircuitElement[] => {
       /^res(?:\d{4}|\d{5})(?:_|$)/i.test(footprintString))
       ? sz?.nonpolarizedSilkscreen
       : undefined
-
-  // Default passives keep the historical opening on the right.
-  // Diodes and LEDs flip that opening to the left so the closed side marks pin 2.
-  const flipPolarizedSilkscreen = fn === "diode" || fn === "led"
 
   if (nonpolarizedSilkscreen?.stroke_width_mm) {
     const {
@@ -318,9 +308,8 @@ export const passive = (params: PassiveDef): AnyCircuitElement[] => {
     const leftPadCenterX = -p / 2
     const rightPadCenterX = p / 2
     const leftOutsidePadX = leftPadCenterX - pw / 2 - 0.2
-    const rightOutsidePadX = rightPadCenterX + pw / 2 + 0.2
-    const openX = flipPolarizedSilkscreen ? leftPadCenterX : rightPadCenterX
-    const closedX = flipPolarizedSilkscreen ? rightOutsidePadX : leftOutsidePadX
+    const openX = rightPadCenterX
+    const closedX = leftOutsidePadX
     const topY = ph / 2 + 0.4
     const bottomY = -ph / 2 - 0.4
 

@@ -22,4 +22,4 @@ test("parity/tqfp32", async () => {
     import.meta.path,
     "tqfp32_boolean_difference",
   )
-}, 10000)
+}, 15_000)

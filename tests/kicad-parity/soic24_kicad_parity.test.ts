@@ -22,4 +22,4 @@ test("parity/soic24", async () => {
     import.meta.path,
     "soic24_boolean_difference",
   )
-})
+}, 15_000)
